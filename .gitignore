@@ -1,0 +1,14 @@
+# Backend environment variables
+TodoBackend/.env
+TodoBackend/.env.*
+
+# Backend dependencies
+TOdoBackend/node_modules/
+
+# Logs
+*.log
+logs/
+
+# Optional OS files
+.DS_Store
+Thumbs.db

@@ -1,115 +1,107 @@
-
 import pool from "../config/db.js";
 
-export const createTodo = async (req,res) => {
-  try{
+export const createTodo = async (req, res) => {
+  try {
     const { text } = req.body;
     const userId = req.user.id;
 
-    const [result] = await pool.query(
-      "INSERT INTO todos (text, user_id) VALUES (?, ?)",
+    const result = await pool.query(
+      "INSERT INTO todos (text, user_id) VALUES ($1, $2) RETURNING *",
       [text, userId]
     );
 
-    res.status(201).json({
-      id: result.insertId,
-      text,
-      user_id: userId
-    });
+    res.status(201).json(result.rows[0]);
 
-  }catch(err){
+  } catch (err) {
     console.error(err);
-    res.status (500).json({message:"server error"});
+    res.status(500).json({ message: "server error" });
   }
 };
 
-export const getTodo = async (req,res) => {
-  try{
+
+export const getTodo = async (req, res) => {
+  try {
     const userId = req.user.id;
 
-    const [rows] = await pool.query(
-      "SELECT * FROM todos WHERE user_id = ?",
+    const result = await pool.query(
+      "SELECT * FROM todos WHERE user_id = $1",
       [userId]
     );
 
-    res.json(rows);
+    res.json(result.rows);
 
-  }catch(err){
+  } catch (err) {
     console.error(err);
-    res.status(500).json({message:"server error"});
+    res.status(500).json({ message: "server error" });
   }
 };
 
 
-export const updateTodo = async (req,res) => {
-  try{
+export const updateTodo = async (req, res) => {
+  try {
     const { id } = req.params;
     const { text } = req.body;
     const userId = req.user.id;
 
-    const [result] = await pool.query(
-      "UPDATE todos SET text=?  WHERE id=? AND user_id=?",
-      [text,  id,  userId]
+    const updateResult = await pool.query(
+      "UPDATE todos SET text=$1 WHERE id=$2 AND user_id=$3 RETURNING *",
+      [text, id, userId]
     );
 
-    if(result.affectedRows === 0){
-      return res.status(403).json({message:"not allowed"});
+    if (updateResult.rows.length === 0) {
+      return res.status(403).json({ message: "not allowed" });
     }
 
-    const [rows] = await pool.query(
-  "SELECT * FROM todos WHERE id=? AND user_id=?",
-  [id, userId]
-);
+    res.json(updateResult.rows[0]);
 
-    res.json(rows[0]);
-
-  }catch(err){
+  } catch (err) {
     console.error(err);
-    res.status(500).json({message:"server error"});
-  }
-};
-
-export const partialUpdate = async(req,res) =>{
-
-  try{
-    const {id} = req.params;
-    
-    const userId = req.user.id;
-
-    const [result] = await pool.query("UPDATE todos SET completed = NOT completed WHERE id =? AND user_id =?",[id,userId]);
-
-    if(result.affectedRows===0){
-      return res.status(404).json({message:"todo not found"});
-    }
-
-    const[rows] = await pool.query("SELECT * FROM todos WHERE id =? AND user_id =?",[id,userId]);
-    res.json(rows[0]);
-  }catch(err){
-    console.log(err);
-    return res.status(500).json({message:"server error"});
+    res.status(500).json({ message: "server error" });
   }
 };
 
 
-export const deleteTodo = async (req,res) => {
-  try{
+export const partialUpdate = async (req, res) => {
+  try {
     const { id } = req.params;
     const userId = req.user.id;
 
-    const [result] = await pool.query(
-      "DELETE FROM todos WHERE id=? AND user_id=?",
+    const result = await pool.query(
+      "UPDATE todos SET completed = NOT completed WHERE id=$1 AND user_id=$2 RETURNING *",
       [id, userId]
     );
 
-    if(result.affectedRows === 0){
-      return res.status(403).json({message:"not allowed"});
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "todo not found" });
     }
 
-    res.json({message:"deleted"});
+    res.json(result.rows[0]);
 
-  }catch(err){
-    console.error(err);
-    res.status(500).json({message:"server error"});
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "server error" });
   }
 };
 
+
+export const deleteTodo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      "DELETE FROM todos WHERE id=$1 AND user_id=$2 RETURNING *",
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(403).json({ message: "not allowed" });
+    }
+
+    res.json({ message: "deleted" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "server error" });
+  }
+};

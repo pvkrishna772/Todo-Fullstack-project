@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 const api = axios.create({
-    baseURL :"http://localhost:5000/api",
+    baseURL :" https://todo-fullstack-project-pm8d.onrender.com/api",
     withCredentials: true
 });
 
